@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚓ Морський бій — Фізкультурний!</title>
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --ocean: #0a1628;
+      --deep: #0d1f3c;
+      --wave: #1a3a5c;
+      --foam: #2a5298;
+      --accent: #00d4ff;
+      --gold: #FFD700;
+      --hit: #ff4444;
+      --miss: #4a9eff;
+      --ship: #1e3a5c;
+      --exercise: #7c3aed;
+      --exercise-light: #a78bfa;
+      --green: #10b981;
+      --pink: #f472b6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--ocean);
+      color: #e2e8f0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── OCEAN BACKGROUND ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(0,100,200,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(0,212,255,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 60% 80%, rgba(124,58,237,0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .screen { display: none; position: relative; z-index: 1; }
+    .screen.active { display: flex; }
+
+    /* ═══════════════════════════════
+       WAVES ANIMATION
+    ═══════════════════════════════ */
+    .waves-bg {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 120px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.3;
+    }
+    .wave {
+      position: absolute;
+      bottom: 0;
+      width: 200%;
+      height: 80px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 80'%3E%3Cpath fill='%2300d4ff' fill-opacity='0.4' d='M0,40 C240,80 480,0 720,40 C960,80 1200,0 1440,40 L1440,80 L0,80 Z'/%3E%3C/svg%3E") repeat-x;
+      animation: wave-move 8s linear infinite;
+    }
+    .wave:nth-child(2) {
+      bottom: 10px;
+      animation: wave-move 12s linear infinite reverse;
+      opacity: 0.5;
+    }
+    @keyframes wave-move {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* ═══════════════════════════════
+       SCREEN 1 — SETUP
+    ═══════════════════════════════ */
+    #setup-screen {
+      min-height: 100vh;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 24px 16px 80px;
+      overflow-y: auto;
+    }
+
+    .logo-area {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .logo-ship {
+      font-size: 3.5rem;
+      animation: float 3s ease-in-out infinite;
+      display: block;
+      margin-bottom: 4px;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0) rotate(-2deg); }
+      50% { transform: translateY(-10px) rotate(2deg); }
+    }
+    .logo-title {
+      font-family: 'Russo One', sans-serif;
+      font-size: 2.4rem;
+      background: linear-gradient(135deg, #00d4ff, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 2px;
+      text-shadow: none;
+    }
+    .logo-sub {
+      color: #64a0c8;
+      font-size: 0.9rem;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    .setup-card {
+      width: 100%;
+      max-width: 680px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(0,212,255,0.15);
+      border-radius: 20px;
+      padding: 22px 24px;
+      margin-bottom: 16px;
+      backdrop-filter: blur(10px);
+    }
+    .setup-card-title {
+      font-family: 'Russo One', sans-serif;
+      font-size: 1rem;
+      color: var(--accent);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 1px;
+    }
+
+    /* Players */
+    #players-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .player-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .player-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 0.85rem;
+      flex-shrink: 0;
+      color: #fff;
+    }
+    .player-row input {
+      flex: 1;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: 10px;
+      padding: 8px 12px;
+      color: #fff;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+    .player-row input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,212,255,0.15);
+    }
+    .player-row input::placeholder { color: rgba(255,255,255,0.3); }
+
+    .player-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .player-count-badge {
+      background: rgba(0,212,255,0.15);
+      color: var(--accent);
+      font-weight: 800;
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+    }
+    .icon-btn {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900;
+    }
+    .icon-btn:hover { background: rgba(0,212,255,0.3); transform: scale(1.1); }
+
+    /* Difficulty */
+    .diff-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .diff-btn {
+      padding: 14px 8px;
+      border-radius: 14px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      text-align: center;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.85rem;
+      transition: all 0.25s;
+      color: #fff;
+    }
+    .diff-btn.selected {
+      border-color: #fff;
+      transform: scale(1.04);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .diff-easy   { background: linear-gradient(135deg, #059669, #10b981); }
+    .diff-medium { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .diff-hard   { background: linear-gradient(135deg, #dc2626, #ef4444); }
+
+    /* Turn mode */
+    .mode-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .mode-btn {
+      padding: 14px 12px;
+      border-radius: 14px;
+      border: 2px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      cursor: pointer;
+      color: #fff;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      text-align: left;
+      transition: all 0.25s;
+    }
+    .mode-btn.selected {
+      border-color: var(--accent);
+      background: rgba(0,212,255,0.1);
+      box-shadow: 0 0 20px rgba(0,212,255,0.2);
+    }
+    .mode-btn .mode-icon { font-size: 1.8rem; margin-bottom: 4px; }
+    .mode-btn .mode-name { font-size: 0.9rem; font-weight: 800; }
+    .mode-btn .mode-desc { font-size: 0.72rem; color: rgba(255,255,255,0.5); margin-top: 3px; }
+
+    /* Volume */
+    .vol-row { display: flex; align-items: center; gap: 12px; }
+    input[type=range] {
+      flex: 1; -webkit-appearance: none; appearance: none;
+      height: 6px; border-radius: 3px; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 20px; height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      border: 2px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,212,255,0.5);
+      cursor: pointer;
+    }
+
+    .start-btn {
+      width: 100%;
+      max-width: 680px;
+      padding: 18px;
+      border: none;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #0077ff, #00d4ff, #7c3aed);
+      background-size: 200% 200%;
+      animation: gradient-shift 3s ease infinite;
+      color: #fff;
+      font-family: 'Russo One', sans-serif;
+      font-size: 1.3rem;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 6px 30px rgba(0,119,255,0.4);
+    }
+    @keyframes gradient-shift {
+      0%,100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .start-btn:hover { transform: scale(1.02); box-shadow: 0 10px 40px rgba(0,119,255,0.6); }
+
+    /* ═══════════════════════════════
+       SCREEN 2 — GAME
+    ═══════════════════════════════ */
+    #game-screen {
+      min-height: 100vh;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 12px 80px;
+      overflow-y: auto;
+    }
+
+    .game-header {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .game-title {
+      font-family: 'Russo One', sans-serif;
+      font-size: 1.6rem;
+      background: linear-gradient(135deg, #00d4ff, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 2px;
+    }
+    .diff-tag {
+      font-size: 0.75rem;
+      color: #64a0c8;
+      font-weight: 600;
+    }
+
+    /* Players bar */
+    #players-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      width: 100%;
+      max-width: 900px;
+    }
+    .player-badge {
+      padding: 8px 14px;
+      border-radius: 14px;
+      text-align: center;
+      border: 2px solid transparent;
+      transition: all 0.3s;
+      min-width: 80px;
+    }
+    .player-badge.active {
+      border-color: var(--gold);
+      box-shadow: 0 0 20px rgba(255,215,0,0.5);
+      transform: scale(1.08);
+    }
+    .player-badge .p-name {
+      font-weight: 800; font-size: 0.85rem;
+      color: #fff; max-width: 90px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .player-badge .p-score {
+      font-size: 0.75rem; color: rgba(255,255,255,0.7);
+      font-weight: 600; margin-top: 2px;
+    }
+
+    /* Turn indicator */
+    .turn-box {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: 14px;
+      padding: 8px 20px;
+      margin-bottom: 10px;
+      text-align: center;
+      backdrop-filter: blur(8px);
+    }
+    .turn-label { font-size: 0.75rem; color: #64a0c8; font-weight: 600; }
+    .turn-name  { font-size: 1.2rem; color: var(--gold); font-family: 'Russo One', sans-serif; letter-spacing: 1px; }
+    .mode-tag   { font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 2px 10px; border-radius: 999px; margin-left: 6px; }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    .stat-box {
+      background: rgba(255,255,255,0.9);
+      border-radius: 12px;
+      padding: 6px 16px;
+      text-align: center;
+      min-width: 70px;
+    }
+    .stat-val { font-weight: 900; font-size: 1.1rem; }
+    .stat-lbl { font-size: 0.65rem; color: #555; font-weight: 600; }
+    .stat-ships .stat-val { color: #0077ff; }
+    .stat-exercises .stat-val { color: #7c3aed; }
+    .stat-timer .stat-val { color: #e11d48; }
+
+    /* BOARD */
+    .board-wrap {
+      overflow-x: auto;
+      max-width: 100%;
+      margin-bottom: 10px;
+    }
+    #game-board {
+      display: inline-grid;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 2px solid rgba(0,212,255,0.2);
+      background: rgba(0,20,60,0.6);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,212,255,0.1);
+    }
+
+    .board-cell {
+      width: 52px; height: 52px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 700;
+      cursor: default;
+      border: 1px solid rgba(0,212,255,0.08);
+      transition: all 0.2s;
+      position: relative;
+      user-select: none;
+    }
+
+    /* Header cells */
+    .board-cell.header-col, .board-cell.header-row {
+      background: rgba(0,60,120,0.8);
+      color: var(--accent);
+      font-family: 'Russo One', sans-serif;
+      font-size: 0.75rem;
+      cursor: default;
+      letter-spacing: 1px;
+      border-color: rgba(0,212,255,0.15);
+    }
+    .board-cell.header-corner {
+      background: rgba(0,40,100,0.9);
+    }
+
+    /* Game cells */
+    .board-cell.cell-hidden {
+      background: rgba(0,30,80,0.6);
+      cursor: pointer;
+    }
+    .board-cell.cell-hidden:hover {
+      background: rgba(0,100,200,0.4);
+      transform: scale(1.05);
+      z-index: 2;
+      border-color: rgba(0,212,255,0.4);
+      box-shadow: 0 0 12px rgba(0,212,255,0.3);
+    }
+
+    /* Hit states */
+    .board-cell.cell-ship-hit {
+      background: linear-gradient(135deg, #7f1d1d, #dc2626);
+      cursor: default;
+      animation: hit-flash 0.4s ease;
+    }
+    @keyframes hit-flash {
+      0%   { transform: scale(1.3); background: #fff; }
+      50%  { transform: scale(0.95); }
+      100% { transform: scale(1); }
+    }
+    .board-cell.cell-exercise-hit {
+      background: linear-gradient(135deg, #4c1d95, #7c3aed);
+      cursor: default;
+    }
+    .board-cell.cell-miss {
+      background: rgba(30,80,160,0.3);
+      cursor: default;
+    }
+    .board-cell.cell-miss::after {
+      content: '•';
+      color: rgba(0,212,255,0.6);
+      font-size: 1.2rem;
+    }
+
+    /* Cell content icons */
+    .cell-icon { font-size: 1.3rem; line-height: 1; }
+    .cell-fire { font-size: 1rem; }
+
+    .menu-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .menu-btn:hover { background: rgba(255,255,255,0.2); }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+    .legend-dot {
+      width: 16px; height: 16px;
+      border-radius: 4px;
+    }
+
+    /* ═══════════════════════════════
+       MODAL — EXERCISE
+    ═══════════════════════════════ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+    .modal-overlay.hidden { display: none; }
+
+    .exercise-modal {
+      background: linear-gradient(135deg, #0f1f40, #1a0a2e);
+      border: 1px solid rgba(167,139,250,0.3);
+      border-radius: 24px;
+      padding: 28px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 20px 80px rgba(0,0,0,0.8), 0 0 40px rgba(124,58,237,0.2);
+      transform: scale(0);
+      transition: transform 0.4s cubic-bezier(.34,1.56,.64,1);
+    }
+    .exercise-modal.visible { transform: scale(1); }
+
+    .ex-header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .ex-icon { font-size: 3rem; margin-bottom: 8px; }
+    .ex-title {
+      font-family: 'Russo One', sans-serif;
+      font-size: 1.6rem;
+      color: var(--exercise-light);
+      letter-spacing: 1px;
+    }
+    .ex-reps {
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: #fff;
+      margin: 4px 0;
+    }
+    .ex-reps span { color: var(--exercise-light); }
+    .ex-player-name {
+      font-size: 0.85rem;
+      color: #64a0c8;
+      font-weight: 600;
+    }
+
+    .ex-video-wrap {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    .ex-video-thumb {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #111;
+      cursor: pointer;
+    }
+    .ex-video-thumb img {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .ex-play-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.35);
+      transition: background 0.2s;
+    }
+    .ex-video-thumb:hover .ex-play-overlay { background: rgba(0,0,0,0.5); }
+    .ex-play-circle {
+      width: 72px; height: 72px;
+      background: #ff0000;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 24px rgba(255,0,0,0.7);
+      transition: transform 0.2s;
+    }
+    .ex-video-thumb:hover .ex-play-circle { transform: scale(1.12); }
+    .ex-play-circle::after {
+      content: '';
+      width: 0; height: 0;
+      border-top: 14px solid transparent;
+      border-bottom: 14px solid transparent;
+      border-left: 22px solid #fff;
+      margin-left: 5px;
+    }
+    .ex-open-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 11px;
+      margin-top: 8px;
+      background: rgba(255,0,0,0.12);
+      border: 1px solid rgba(255,80,80,0.3);
+      border-radius: 12px;
+      color: #fca5a5;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .ex-open-btn:hover { background: rgba(255,0,0,0.25); color: #fff; border-color: rgba(255,80,80,0.6); }
+
+    .ex-done-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #059669, #10b981);
+      border: none;
+      border-radius: 14px;
+      color: #fff;
+      font-family: 'Russo One', sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.4);
+    }
+    .ex-done-btn:hover { transform: scale(1.02); box-shadow: 0 8px 30px rgba(16,185,129,0.6); }
+
+    /* ═══════════════════════════════
+       MODAL — SHIP HIT
+    ═══════════════════════════════ */
+    .ship-modal {
+      background: linear-gradient(135deg, #1a0000, #3b0000);
+      border: 1px solid rgba(220,38,38,0.4);
+      border-radius: 24px;
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 20px 80px rgba(0,0,0,0.8), 0 0 60px rgba(220,38,38,0.2);
+      transform: scale(0);
+      transition: transform 0.4s cubic-bezier(.34,1.56,.64,1);
+    }
+    .ship-modal.visible { transform: scale(1); }
+    .ship-boom { font-size: 4rem; animation: boom 0.6s cubic-bezier(.36,.07,.19,.97) both; }
+    @keyframes boom {
+      0%  { transform: scale(0) rotate(-20deg); }
+      60% { transform: scale(1.3) rotate(5deg); }
+      100%{ transform: scale(1) rotate(0); }
+    }
+    .ship-modal h2 {
+      font-family: 'Russo One', sans-serif;
+      font-size: 1.8rem;
+      color: #ff6b6b;
+      margin: 8px 0 4px;
+      letter-spacing: 2px;
+    }
+    .ship-modal p { color: #fca5a5; font-size: 0.95rem; margin-bottom: 20px; }
+    .ship-ok-btn {
+      padding: 12px 32px;
+      background: linear-gradient(135deg, #dc2626, #ef4444);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Russo One', sans-serif;
+      font-size: 1rem;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 20px rgba(220,38,38,0.4);
+    }
+    .ship-ok-btn:hover { transform: scale(1.05); }
+
+    /* ═══════════════════════════════
+       MODAL — WIN
+    ═══════════════════════════════ */
+    .win-modal {
+      background: linear-gradient(135deg, #0a1628, #0d1f3c);
+      border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 24px;
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 0 20px 80px rgba(0,0,0,0.8), 0 0 60px rgba(255,215,0,0.15);
+      transform: scale(0);
+      transition: transform 0.5s cubic-bezier(.34,1.56,.64,1);
+    }
+    .win-modal.visible { transform: scale(1); }
+    .win-modal h2 {
+      font-family: 'Russo One', sans-serif;
+      font-size: 2rem;
+      color: var(--gold);
+      letter-spacing: 2px;
+      margin: 10px 0 4px;
+    }
+    .win-modal p { color: #94a3b8; margin-bottom: 20px; }
+
+    .scoreboard { margin-bottom: 20px; }
+    .score-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+    .score-row:nth-child(1) { background: linear-gradient(135deg, #78350f, #d97706); }
+    .score-row:nth-child(2) { background: linear-gradient(135deg, #374151, #6b7280); }
+    .score-row:nth-child(3) { background: linear-gradient(135deg, #7c2d12, #b45309); }
+    .score-row:nth-child(n+4) { background: rgba(255,255,255,0.06); }
+    .score-row .s-medal { font-size: 1.5rem; }
+    .score-row .s-name  { font-weight: 800; font-size: 1rem; color: #fff; flex: 1; margin-left: 10px; text-align: left; }
+    .score-row .s-score { font-size: 1.3rem; font-weight: 900; color: var(--gold); }
+
+    .win-stats {
+      background: rgba(255,255,255,0.05);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-around;
+    }
+    .win-stat-val { font-size: 1.3rem; font-weight: 900; color: var(--accent); }
+    .win-stat-lbl { font-size: 0.72rem; color: #64a0c8; font-weight: 600; }
+
+    .win-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .btn-again {
+      padding: 12px 28px;
+      background: linear-gradient(135deg, #059669, #10b981);
+      border: none; border-radius: 12px;
+      color: #fff; font-family: 'Russo One', sans-serif;
+      font-size: 0.95rem; letter-spacing: 1px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-menu {
+      padding: 12px 28px;
+      background: linear-gradient(135deg, #7c3aed, #a78bfa);
+      border: none; border-radius: 12px;
+      color: #fff; font-family: 'Russo One', sans-serif;
+      font-size: 0.95rem; letter-spacing: 1px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-again:hover, .btn-menu:hover { transform: scale(1.05); }
+
+    /* CONFETTI */
+    @keyframes confFall {
+      0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+    .confetti {
+      position: fixed; pointer-events: none; z-index: 200;
+      animation: confFall var(--dur) var(--delay) linear forwards;
+    }
+
+    /* PULSE anim for active badge */
+    @keyframes pulse-gold {
+      0%,100% { box-shadow: 0 0 12px rgba(255,215,0,0.5); }
+      50%      { box-shadow: 0 0 30px rgba(255,215,0,0.9), 0 0 60px rgba(255,215,0,0.3); }
+    }
+    .player-badge.active { animation: pulse-gold 1.5s ease-in-out infinite; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.2); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<div class="waves-bg">
+  <div class="wave"></div>
+  <div class="wave"></div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 1 — SETUP
+══════════════════════════════════ -->
+<div id="setup-screen" class="screen active">
+  <div class="logo-area">
+    <span class="logo-ship">⚓</span>
+    <div class="logo-title">МОРСЬКИЙ БІЙ</div>
+    <div class="logo-sub">💪 Фізкультурний режим</div>
+  </div>
+
+  <div class="setup-card">
+    <div class="setup-card-title">
+      <span>👥</span> ГРАВЦІ
+      <span id="player-count-badge" class="player-count-badge" style="margin-left:auto">2</span>
+      <button class="icon-btn" id="remove-player-btn" title="Видалити гравця">−</button>
+      <button class="icon-btn" id="add-player-btn" title="Додати гравця">+</button>
+    </div>
+    <div id="players-list"></div>
+    <p style="font-size:0.72rem;color:#475569;text-align:center;margin-top:10px;">Мінімум 2 · кількість необмежена</p>
+  </div>
+
+  <div class="setup-card">
+    <div class="setup-card-title"><span>🎮</span> СКЛАДНІСТЬ</div>
+    <div class="diff-grid">
+      <button class="diff-btn diff-easy selected" data-diff="easy">🟢<br>Легкий<br><span style="font-size:0.72rem;opacity:0.8">6×6 · 4 кораблі</span></button>
+      <button class="diff-btn diff-medium" data-diff="medium">🟡<br>Середній<br><span style="font-size:0.72rem;opacity:0.8">8×8 · 7 кораблів</span></button>
+      <button class="diff-btn diff-hard" data-diff="hard">🔴<br>Важкий<br><span style="font-size:0.72rem;opacity:0.8">10×10 · 10 кораблів</span></button>
+    </div>
+  </div>
+
+  <div class="setup-card">
+    <div class="setup-card-title"><span>🔄</span> ПРАВИЛО ПІСЛЯ ПОМИЛКИ</div>
+    <div class="mode-grid">
+      <button class="mode-btn selected" data-mode="rotate">
+        <div class="mode-icon">🔁</div>
+        <div class="mode-name">Хід переходить</div>
+        <div class="mode-desc">Наступний гравець після промаху</div>
+      </button>
+      <button class="mode-btn" data-mode="streak">
+        <div class="mode-icon">🔥</div>
+        <div class="mode-name">Серія ходів</div>
+        <div class="mode-desc">Гравець ходить поки не промахнеться</div>
+      </button>
+    </div>
+  </div>
+
+  <div class="setup-card">
+    <div class="setup-card-title"><span>🔊</span> ГУЧНІСТЬ</div>
+    <div class="vol-row">
+      <span id="vol-icon" style="font-size:1.5rem">🔊</span>
+      <input type="range" id="volume-slider" min="0" max="100" value="60"
+        style="background: linear-gradient(to right, #00d4ff 0%, #00d4ff 60%, rgba(255,255,255,0.1) 60%)">
+      <span id="vol-value" style="font-weight:800;color:#00d4ff;min-width:38px;text-align:center">60%</span>
+    </div>
+  </div>
+
+  <button id="start-btn" class="start-btn">⚓ ПОЧАТИ БІЙ!</button>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 2 — GAME
+══════════════════════════════════ -->
+<div id="game-screen" class="screen">
+  <div class="game-header">
+    <div class="game-title">⚓ МОРСЬКИЙ БІЙ</div>
+    <div id="diff-tag" class="diff-tag"></div>
+  </div>
+
+  <div id="players-bar"></div>
+
+  <div class="turn-box">
+    <div class="turn-label">Зараз ходить:</div>
+    <span id="turn-name" class="turn-name">—</span>
+    <span id="mode-tag" class="mode-tag"></span>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-box stat-ships">
+      <div class="stat-val" id="ships-left">0</div>
+      <div class="stat-lbl">🚢 Кораблів</div>
+    </div>
+    <div class="stat-box stat-exercises">
+      <div class="stat-val" id="exercises-done">0</div>
+      <div class="stat-lbl">💪 Вправ</div>
+    </div>
+    <div class="stat-box stat-timer">
+      <div class="stat-val" id="timer">00:00</div>
+      <div class="stat-lbl">⏱ Час</div>
+    </div>
+    <button class="menu-btn" id="menu-btn">🏠 Меню</button>
+  </div>
+
+  <div class="board-wrap">
+    <div id="game-board"></div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#dc2626"></div>Корабель потоплено</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div>Вправа виконана</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(30,80,160,0.4)"></div>Промах</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(0,30,80,0.8);border:1px solid rgba(0,212,255,0.2)"></div>Не відкрито</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     MODAL — EXERCISE
+══════════════════════════════════ -->
+<div id="exercise-overlay" class="modal-overlay hidden">
+  <div id="exercise-modal" class="exercise-modal">
+    <div class="ex-header">
+      <div id="ex-icon" class="ex-icon">💪</div>
+      <div id="ex-title" class="ex-title">ВІДЖИМАННЯ</div>
+      <div id="ex-reps" class="ex-reps"><span id="ex-reps-num">8</span> разів</div>
+      <div id="ex-player" class="ex-player-name"></div>
+    </div>
+    <div class="ex-video-wrap">
+      <div class="ex-video-thumb" id="ex-thumb-link">
+        <img id="ex-thumb-img" src="" alt="Відео вправи">
+        <div class="ex-play-overlay">
+          <div class="ex-play-circle"></div>
+        </div>
+      </div>
+      <a id="ex-open-btn" class="ex-open-btn" href="#" target="_blank" rel="noopener">
+        ▶ Відкрити відео на YouTube
+      </a>
+    </div>
+    <button id="ex-done-btn" class="ex-done-btn">✅ ВИКОНАВ / ВИКОНАЛА!</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     MODAL — SHIP HIT
+══════════════════════════════════ -->
+<div id="ship-overlay" class="modal-overlay hidden">
+  <div id="ship-modal" class="ship-modal">
+    <div id="ship-boom" class="ship-boom">💥</div>
+    <h2>ПОТОПЛЕНО!</h2>
+    <p id="ship-msg">Корабель знищено! +1 очко</p>
+    <button id="ship-ok-btn" class="ship-ok-btn">⚓ ДАЛІ!</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     MODAL — WIN
+══════════════════════════════════ -->
+<div id="win-overlay" class="modal-overlay hidden">
+  <div id="win-modal" class="win-modal">
+    <div style="font-size:3rem">🎉⚓🎉</div>
+    <h2>БІЙ ЗАВЕРШЕНО!</h2>
+    <p>Підсумкові результати</p>
+    <div id="scoreboard" class="scoreboard"></div>
+    <div class="win-stats">
+      <div>
+        <div class="win-stat-val" id="final-ships">0</div>
+        <div class="win-stat-lbl">Кораблів потоплено</div>
+      </div>
+      <div>
+        <div class="win-stat-val" id="final-exercises">0</div>
+        <div class="win-stat-lbl">Вправ виконано</div>
+      </div>
+      <div>
+        <div class="win-stat-val" id="final-time">00:00</div>
+        <div class="win-stat-lbl">Час гри</div>
+      </div>
+    </div>
+    <div class="win-btns">
+      <button id="play-again-btn" class="btn-again">🎮 Ще раз!</button>
+      <button id="menu-from-win-btn" class="btn-menu">🏠 Меню</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// КОНСТАНТИ
+// ═══════════════════════════════════════════════
+const EXERCISES = [
+  {
+    name: 'ВІДЖИМАННЯ',
+    icon: '💪',
+    videoId: 'z_pJ3HdMDCU',
+    color: '#dc2626'
+  },
+  {
+    name: 'ПРИСІДАННЯ',
+    icon: '🦵',
+    videoId: '77you_-BFdA',
+    color: '#7c3aed'
+  },
+  {
+    name: 'БЕРПІ',
+    icon: '🏃',
+    videoId: 'gymo438Pks0',
+    color: '#0891b2'
+  },
+  {
+    name: 'КЕНГУРЧИКИ',
+    icon: '🦘',
+    videoId: 'e9CwMpvTGDA',
+    color: '#059669'
+  },
+  {
+    name: 'ЖАБКА',
+    icon: '🐸',
+    videoId: 'aeQg9cjujvY',
+    color: '#d97706'
+  },
+  {
+    name: 'СКРУЧУВАННЯ',
+    icon: '🔄',
+    videoId: 'z34IHo9h4ZM',
+    color: '#e11d48'
+  }
+];
+
+const COLORS = [
+  'linear-gradient(135deg,#1d4ed8,#3b82f6)',
+  'linear-gradient(135deg,#be123c,#f43f5e)',
+  'linear-gradient(135deg,#b45309,#f59e0b)',
+  'linear-gradient(135deg,#047857,#10b981)',
+  'linear-gradient(135deg,#6d28d9,#a78bfa)',
+  'linear-gradient(135deg,#0e7490,#06b6d4)',
+  'linear-gradient(135deg,#be185d,#ec4899)',
+  'linear-gradient(135deg,#4d7c0f,#84cc16)',
+];
+
+const DEFAULT_NAMES = ['Аліса','Богдан','Вікторія','Гліб','Дарина','Євген','Жанна','Іван'];
+
+const DIFFICULTY = {
+  easy:   { size: 6,  ships: 4,  exercises: 8,  label: 'Легкий • 6×6' },
+  medium: { size: 8,  ships: 7,  exercises: 14, label: 'Середній • 8×8' },
+  hard:   { size: 10, ships: 10, exercises: 18, label: 'Важкий • 10×10' },
+};
+
+// ═══════════════════════════════════════════════
+// СТАН
+// ═══════════════════════════════════════════════
+let playerCount = 2;
+let playerNames = [];
+let players = [];
+let currentIdx = 0;
+let difficulty = 'easy';
+let turnMode = 'rotate';
+let masterVolume = 0.6;
+
+let grid = [];         // 2D array: { type: 'empty'|'ship'|'exercise', revealed: bool, exercise: obj, reps: num }
+let gridSize = 6;
+let totalShips = 0;
+let shipsFound = 0;
+let exercisesDone = 0;
+let totalCells = 0;
+let revealedCells = 0;
+let seconds = 0;
+let timerInterval = null;
+let isLocked = false;
+
+let audioCtx = null;
+
+// ═══════════════════════════════════════════════
+// AUDIO
+// ═══════════════════════════════════════════════
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function tone(freq, type, dur, vol = 0.2, delay = 0) {
+  try {
+    const ctx = getCtx();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = type;
+    o.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+    const v = vol * masterVolume;
+    g.gain.setValueAtTime(v, ctx.currentTime + delay);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + dur);
+    o.start(ctx.currentTime + delay);
+    o.stop(ctx.currentTime + delay + dur + 0.05);
+  } catch(e) {}
+}
+const sfxSplash  = () => { tone(200,'sine',0.1,0.15); tone(150,'sine',0.15,0.1,0.08); };
+const sfxHit     = () => { tone(80,'sawtooth',0.2,0.3); tone(60,'sawtooth',0.25,0.25,0.1); tone(40,'sine',0.3,0.2,0.2); };
+const sfxExercise= () => { tone(440,'sine',0.1,0.2); tone(550,'sine',0.12,0.2,0.1); tone(660,'sine',0.15,0.2,0.22); };
+const sfxWin     = () => [523,659,784,1047].forEach((f,i) => tone(f,'sine',0.3,0.28,i*0.13));
+
+// ═══════════════════════════════════════════════
+// VOLUME SLIDER
+// ═══════════════════════════════════════════════
+const volSlider = document.getElementById('volume-slider');
+function updateVol(val) {
+  volSlider.style.background = `linear-gradient(to right, #00d4ff 0%, #00d4ff ${val}%, rgba(255,255,255,0.1) ${val}%)`;
+  document.getElementById('vol-value').textContent = `${val}%`;
+  document.getElementById('vol-icon').textContent = val === 0 ? '🔇' : val < 40 ? '🔉' : '🔊';
+  masterVolume = val / 100;
+}
+volSlider.addEventListener('input', () => updateVol(+volSlider.value));
+updateVol(60);
+
+// ═══════════════════════════════════════════════
+// PLAYERS FORM
+// ═══════════════════════════════════════════════
+function renderInputs() {
+  document.getElementById('player-count-badge').textContent = playerCount;
+  const list = document.getElementById('players-list');
+  list.innerHTML = '';
+  for (let i = 0; i < playerCount; i++) {
+    const saved = playerNames[i] || '';
+    const color = COLORS[i % COLORS.length];
+    const row = document.createElement('div');
+    row.className = 'player-row';
+    row.innerHTML = `
+      <div class="player-avatar" style="background:${color}">${i+1}</div>
+      <input type="text" maxlength="16" value="${saved}" data-idx="${i}"
+        placeholder="Гравець ${i+1}">
+    `;
+    list.appendChild(row);
+  }
+}
+function collectNames() {
+  playerNames = [];
+  document.querySelectorAll('#players-list input').forEach(inp => {
+    playerNames[+inp.dataset.idx] = inp.value.trim() || inp.placeholder;
+  });
+}
+
+document.getElementById('add-player-btn').addEventListener('click', () => { collectNames(); playerCount++; renderInputs(); });
+document.getElementById('remove-player-btn').addEventListener('click', () => {
+  if (playerCount <= 2) return;
+  collectNames(); playerCount--; renderInputs();
+});
+
+// Difficulty
+document.querySelectorAll('.diff-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.diff-btn').forEach(x => x.classList.remove('selected'));
+    b.classList.add('selected');
+    difficulty = b.dataset.diff;
+  });
+});
+
+// Turn mode
+document.querySelectorAll('.mode-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(x => x.classList.remove('selected'));
+    b.classList.add('selected');
+    turnMode = b.dataset.mode;
+  });
+});
+
+// ═══════════════════════════════════════════════
+// START GAME
+// ═══════════════════════════════════════════════
+document.getElementById('start-btn').addEventListener('click', () => {
+  collectNames();
+  players = Array.from({ length: playerCount }, (_, i) => ({
+    name: playerNames[i] || DEFAULT_NAMES[i] || `Гравець ${i+1}`,
+    score: 0,
+    color: COLORS[i % COLORS.length]
+  }));
+
+  currentIdx = 0;
+  shipsFound = 0;
+  exercisesDone = 0;
+  revealedCells = 0;
+  seconds = 0;
+  isLocked = false;
+
+  const cfg = DIFFICULTY[difficulty];
+  gridSize = cfg.size;
+  totalShips = cfg.ships;
+
+  buildGrid(cfg);
+  buildBoardUI();
+  buildBadges();
+  updateTurn();
+
+  document.getElementById('diff-tag').textContent = cfg.label;
+  document.getElementById('mode-tag').textContent = turnMode === 'rotate' ? '🔁' : '🔥';
+  document.getElementById('ships-left').textContent = totalShips;
+  document.getElementById('exercises-done').textContent = 0;
+  document.getElementById('timer').textContent = '00:00';
+
+  showScreen('game-screen');
+  startTimer();
+});
+
+// ═══════════════════════════════════════════════
+// BUILD GRID (place ships + exercises)
+// ═══════════════════════════════════════════════
+function buildGrid(cfg) {
+  const size = cfg.size;
+  grid = Array.from({ length: size }, () =>
+    Array.from({ length: size }, () => ({ type: 'empty', revealed: false, exercise: null, reps: 0 }))
+  );
+
+  totalCells = size * size;
+  const positions = shuffle(range(totalCells));
+
+  // Place ships
+  for (let i = 0; i < cfg.ships; i++) {
+    const pos = positions[i];
+    const r = Math.floor(pos / size);
+    const c = pos % size;
+    grid[r][c].type = 'ship';
+  }
+
+  // Place exercises
+  const exCount = cfg.exercises;
+  for (let i = 0; i < exCount; i++) {
+    const pos = positions[cfg.ships + i];
+    const r = Math.floor(pos / size);
+    const c = pos % size;
+    grid[r][c].type = 'exercise';
+    grid[r][c].exercise = EXERCISES[Math.floor(Math.random() * EXERCISES.length)];
+    grid[r][c].reps = 5 + Math.floor(Math.random() * 6); // 5-10
+  }
+}
+
+function range(n) { return Array.from({ length: n }, (_, i) => i); }
+
+// ═══════════════════════════════════════════════
+// BUILD BOARD UI
+// ═══════════════════════════════════════════════
+const COLS = ['', 'А','Б','В','Г','Д','Е','Ж','З','І','К'];
+
+function buildBoardUI() {
+  const board = document.getElementById('game-board');
+  board.innerHTML = '';
+  const total = gridSize + 1;
+  board.style.gridTemplateColumns = `repeat(${total}, 1fr)`;
+
+  for (let r = 0; r <= gridSize; r++) {
+    for (let c = 0; c <= gridSize; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'board-cell';
+
+      if (r === 0 && c === 0) {
+        cell.classList.add('header-corner');
+        cell.textContent = '⚓';
+        cell.style.fontSize = '1rem';
+      } else if (r === 0) {
+        cell.classList.add('header-col');
+        cell.textContent = COLS[c];
+      } else if (c === 0) {
+        cell.classList.add('header-row');
+        cell.textContent = r;
+      } else {
+        cell.classList.add('cell-hidden');
+        cell.dataset.row = r - 1;
+        cell.dataset.col = c - 1;
+        cell.addEventListener('click', onCellClick);
+      }
+      board.appendChild(cell);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════
+// CELL CLICK
+// ═══════════════════════════════════════════════
+function onCellClick(e) {
+  if (isLocked) return;
+  const cell = e.currentTarget;
+  const r = +cell.dataset.row;
+  const c = +cell.dataset.col;
+  const data = grid[r][c];
+  if (data.revealed) return;
+
+  isLocked = true;
+  data.revealed = true;
+  revealedCells++;
+
+  if (data.type === 'ship') {
+    sfxHit();
+    cell.classList.remove('cell-hidden');
+    cell.classList.add('cell-ship-hit');
+    cell.innerHTML = '<div class="cell-icon">🔥</div>';
+
+    players[currentIdx].score++;
+    document.getElementById(`score-${currentIdx}`).textContent = players[currentIdx].score;
+    shipsFound++;
+    document.getElementById('ships-left').textContent = totalShips - shipsFound;
+
+    showShipModal(players[currentIdx].name, () => {
+      isLocked = false;
+      if (shipsFound >= totalShips) { finishGame(); return; }
+      if (turnMode === 'rotate') nextPlayer();
+      updateTurn();
+    });
+
+  } else if (data.type === 'exercise') {
+    sfxExercise();
+    cell.classList.remove('cell-hidden');
+    cell.classList.add('cell-exercise-hit');
+    cell.innerHTML = `<div class="cell-icon">${data.exercise.icon}</div>`;
+
+    showExerciseModal(data.exercise, data.reps, players[currentIdx].name, () => {
+      exercisesDone++;
+      document.getElementById('exercises-done').textContent = exercisesDone;
+      isLocked = false;
+      if (turnMode === 'rotate') nextPlayer();
+      updateTurn();
+    });
+
+  } else {
+    // Miss
+    sfxSplash();
+    cell.classList.remove('cell-hidden');
+    cell.classList.add('cell-miss');
+    isLocked = false;
+    nextPlayer();
+    updateTurn();
+  }
+}
+
+function nextPlayer() {
+  currentIdx = (currentIdx + 1) % players.length;
+}
+
+// ═══════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════
+function showExerciseModal(ex, reps, playerName, callback) {
+  document.getElementById('ex-icon').textContent = ex.icon;
+  document.getElementById('ex-title').textContent = ex.name;
+  document.getElementById('ex-reps-num').textContent = reps;
+  document.getElementById('ex-player').textContent = `Виконує: ${playerName}`;
+
+  const videoUrl = `https://www.youtube.com/watch?v=${ex.videoId}`;
+  const thumbUrl = `https://img.youtube.com/vi/${ex.videoId}/hqdefault.jpg`;
+
+  document.getElementById('ex-thumb-img').src = thumbUrl;
+  document.getElementById('ex-thumb-link').onclick = () => window.open(videoUrl, '_blank');
+  document.getElementById('ex-open-btn').href = videoUrl;
+
+  const overlay = document.getElementById('exercise-overlay');
+  const modal   = document.getElementById('exercise-modal');
+  overlay.classList.remove('hidden');
+  requestAnimationFrame(() => requestAnimationFrame(() => modal.classList.add('visible')));
+
+  const btn = document.getElementById('ex-done-btn');
+  const handler = () => {
+    btn.removeEventListener('click', handler);
+    modal.classList.remove('visible');
+    setTimeout(() => { overlay.classList.add('hidden'); callback(); }, 350);
+  };
+  btn.addEventListener('click', handler);
+}
+
+function showShipModal(playerName, callback) {
+  document.getElementById('ship-msg').textContent = `${playerName} топить корабель! +1 очко 🏆`;
+  const overlay = document.getElementById('ship-overlay');
+  const modal   = document.getElementById('ship-modal');
+  overlay.classList.remove('hidden');
+  requestAnimationFrame(() => requestAnimationFrame(() => modal.classList.add('visible')));
+
+  const btn = document.getElementById('ship-ok-btn');
+  const handler = () => {
+    btn.removeEventListener('click', handler);
+    modal.classList.remove('visible');
+    setTimeout(() => { overlay.classList.add('hidden'); callback(); }, 350);
+  };
+  btn.addEventListener('click', handler);
+}
+
+// ═══════════════════════════════════════════════
+// PLAYERS BAR
+// ═══════════════════════════════════════════════
+function buildBadges() {
+  const bar = document.getElementById('players-bar');
+  bar.innerHTML = '';
+  players.forEach((p, i) => {
+    const el = document.createElement('div');
+    el.id = `badge-${i}`;
+    el.className = 'player-badge';
+    el.style.background = p.color;
+    el.innerHTML = `
+      <div class="p-name">${p.name}</div>
+      <div class="p-score">⭐ <span id="score-${i}">0</span></div>
+    `;
+    bar.appendChild(el);
+  });
+}
+
+function updateTurn() {
+  document.getElementById('turn-name').textContent = players[currentIdx].name;
+  players.forEach((_, i) => {
+    document.getElementById(`badge-${i}`)?.classList.toggle('active', i === currentIdx);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════════
+function startTimer() {
+  clearInterval(timerInterval);
+  seconds = 0;
+  timerInterval = setInterval(() => {
+    seconds++;
+    document.getElementById('timer').textContent = fmtTime(seconds);
+  }, 1000);
+}
+function stopTimer() { clearInterval(timerInterval); timerInterval = null; }
+function fmtTime(s) {
+  return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+}
+
+// ═══════════════════════════════════════════════
+// FINISH
+// ═══════════════════════════════════════════════
+function finishGame() {
+  stopTimer();
+  sfxWin();
+  createConfetti();
+
+  const sorted = [...players].sort((a,b) => b.score - a.score);
+  const medals = ['🥇','🥈','🥉'];
+
+  const sb = document.getElementById('scoreboard');
+  sb.innerHTML = '';
+  sorted.forEach((p, rank) => {
+    const div = document.createElement('div');
+    div.className = 'score-row';
+    div.innerHTML = `
+      <span class="s-medal">${medals[rank] || `${rank+1}.`}</span>
+      <span class="s-name">${p.name}</span>
+      <span class="s-score">⭐ ${p.score}</span>
+    `;
+    sb.appendChild(div);
+  });
+
+  document.getElementById('final-ships').textContent = shipsFound;
+  document.getElementById('final-exercises').textContent = exercisesDone;
+  document.getElementById('final-time').textContent = fmtTime(seconds);
+
+  const overlay = document.getElementById('win-overlay');
+  const modal   = document.getElementById('win-modal');
+  overlay.classList.remove('hidden');
+  requestAnimationFrame(() => requestAnimationFrame(() => modal.classList.add('visible')));
+}
+
+function hideWin() {
+  const modal = document.getElementById('win-modal');
+  modal.classList.remove('visible');
+  setTimeout(() => document.getElementById('win-overlay').classList.add('hidden'), 400);
+}
+
+// ═══════════════════════════════════════════════
+// CONFETTI
+// ═══════════════════════════════════════════════
+function createConfetti() {
+  const colors = ['#00d4ff','#a78bfa','#f472b6','#FFD700','#10b981','#f59e0b','#ef4444','#3b82f6'];
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    const sz = 6 + Math.random()*10;
+    el.style.cssText = `
+      left:${Math.random()*100}vw; top:-10px;
+      width:${sz}px; height:${sz}px;
+      background:${colors[i%colors.length]};
+      border-radius:${Math.random()>.5?'50%':'3px'};
+      --dur:${2+Math.random()*3}s;
+      --delay:${Math.random()*2}s;
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 7000);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goMenu() {
+  stopTimer();
+  hideWin();
+  setTimeout(() => {
+    playerNames = players.map(p => p.name);
+    playerCount = players.length;
+    showScreen('setup-screen');
+    renderInputs();
+  }, 400);
+}
+
+document.getElementById('menu-btn').addEventListener('click', goMenu);
+document.getElementById('menu-from-win-btn').addEventListener('click', goMenu);
+
+document.getElementById('play-again-btn').addEventListener('click', () => {
+  hideWin();
+  setTimeout(() => {
+    players.forEach(p => p.score = 0);
+    currentIdx = 0; shipsFound = 0; exercisesDone = 0;
+    revealedCells = 0; seconds = 0; isLocked = false;
+
+    const cfg = DIFFICULTY[difficulty];
+    gridSize = cfg.size;
+    totalShips = cfg.ships;
+
+    buildGrid(cfg);
+    buildBoardUI();
+    buildBadges();
+    updateTurn();
+
+    document.getElementById('ships-left').textContent = totalShips;
+    document.getElementById('exercises-done').textContent = 0;
+    document.getElementById('timer').textContent = '00:00';
+    startTimer();
+  }, 420);
+});
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+// Init
+renderInputs();
+</script>
+</body>
+</html>
